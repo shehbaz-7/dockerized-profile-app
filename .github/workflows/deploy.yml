@@ -1,25 +1,51 @@
-name: Deploy Docker Image to AWS ECR
+name: Build and Deploy
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Pull your repository files into the runner
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    # Step 2: Build the image and push using the action parameters you picked
-    - name: Build & push Docker image
-      uses: mr-smithers-excellent/docker-build-push@v7
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        image: my-app   # This is your actual ECR repository name
-        tags: latest
-        registry: 285229572098.dkr.ecr.ap-south-2.amazonaws.com # Remove the "/my-app" from the end here
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push Docker image
       env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: profile-card-app
+        IMAGE_TAG: latest
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: SSH into EC2 and restart container
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.EC2_PUBLIC_IP }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        script: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URL }}
+          docker pull ${{ secrets.ECR_REPOSITORY_URL }}:latest
+          docker stop profile-card-app || true
+          docker rm profile-card-app || true
+          docker run -d \
+            --name profile-card-app \
+            -p 3000:3000 \
+            -e AWS_REGION=${{ secrets.AWS_REGION }} \
+            -e DYNAMO_TABLE=user-profiles \
+            ${{ secrets.ECR_REPOSITORY_URL }}:latest

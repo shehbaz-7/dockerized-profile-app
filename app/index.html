@@ -2,160 +2,282 @@
 <html>
 <head>
     <title>User Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .card-header {
+            background: #1a1f2e;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        .avatar-fallback {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 500;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .header-info h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .header-info p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(29,158,117,0.2);
+            color: #5dcaa5;
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            margin-top: 6px;
+        }
+        .card-body { padding: 1.5rem; }
+        .field {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .field:last-child { border-bottom: none; }
+        .field-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #888;
+            font-size: 15px;
+        }
+        .field-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .field-value {
+            font-size: 14px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+        .card-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #f0f0f0;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #1a1f2e;
+            color: #fff;
+        }
+        .btn-primary:hover { background: #2a3040; }
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+        .btn-secondary:hover { background: #eee; }
+
+        .edit-form { padding: 1.5rem; display: none; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+            display: block;
+            font-weight: 500;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #1a1a1a;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #1a1f2e;
+        }
+        .form-actions { display: flex; gap: 8px; margin-top: 1.5rem; }
+        .form-actions .btn { flex: 1; }
+    </style>
     <script>
-        // Load data from MongoDB when the page opens
         window.onload = async function() {
             try {
                 const response = await fetch('/get-profile');
                 if (response.ok) {
                     const data = await response.json();
                     if (data && data.name) {
-                        document.querySelector('#name').textContent = data.name;
-                        document.querySelector('#email').textContent = data.email;
-                        document.querySelector('#interests').textContent = data.interests;
+                        updateDisplay(data.name, data.email, data.interests);
                     }
                 }
             } catch (error) {
-                console.error("Error fetching initial profile:", error);
+                console.error("Error fetching profile:", error);
             }
         };
 
-        function editProfile() {
-            document.querySelector('.container').style.display = 'none';
-            document.querySelector('.container-edit').style.display = 'block';
-
-            const name = document.querySelector('#name').textContent;
-            document.querySelector('#input-name').value = name;
-
-            const email = document.querySelector('#email').textContent;
-            document.querySelector('#input-email').value = email;
-
-            const interests = document.querySelector('#interests').textContent;
-            document.querySelector('#input-interests').value = interests;
+        function updateDisplay(name, email, interests) {
+            document.getElementById('name').textContent = name;
+            document.getElementById('email').textContent = email;
+            document.getElementById('interests').textContent = interests;
+            document.getElementById('display-name').textContent = name;
+            document.getElementById('display-email').textContent = email;
+            document.getElementById('avatar-fallback').textContent = name.charAt(0).toUpperCase();
         }
 
-        // Send updated profile values back to Node server
+        function editProfile() {
+            document.getElementById('view-mode').style.display = 'none';
+            document.getElementById('edit-mode').style.display = 'block';
+            document.getElementById('footer-view').style.display = 'none';
+            document.getElementById('input-name').value = document.getElementById('name').textContent;
+            document.getElementById('input-email').value = document.getElementById('email').textContent;
+            document.getElementById('input-interests').value = document.getElementById('interests').textContent;
+        }
+
+        function cancelEdit() {
+            document.getElementById('view-mode').style.display = 'block';
+            document.getElementById('edit-mode').style.display = 'none';
+            document.getElementById('footer-view').style.display = 'block';
+        }
+
         async function saveProfile() {
             const payload = {
-                name: document.querySelector('#input-name').value,
-                email: document.querySelector('#input-email').value,
-                interests: document.querySelector('#input-interests').value
+                name: document.getElementById('input-name').value,
+                email: document.getElementById('input-email').value,
+                interests: document.getElementById('input-interests').value
             };
-
             try {
                 const response = await fetch('/update-profile', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
                 if (response.ok) {
                     const updatedData = await response.json();
-
-                    document.querySelector('#name').textContent = updatedData.name;
-                    document.querySelector('#email').textContent = updatedData.email;
-                    document.querySelector('#interests').textContent = updatedData.interests;
-
-                    document.querySelector('.container').style.display = 'block';
-                    document.querySelector('.container-edit').style.display = 'none';
+                    updateDisplay(updatedData.name, updatedData.email, updatedData.interests);
+                    cancelEdit();
                 }
             } catch (error) {
                 console.error("Error saving profile:", error);
-                alert("Failed to save profile to database.");
+                alert("Failed to save profile.");
             }
         }
     </script>
-
-    <style>
-        body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            margin: 50px auto;
-            max-width: 600px;
-            padding: 20px;
-            color: #333;
-        }
-        
-        .container, .container-edit {
-            background: #fff;
-            padding: 10px;
-        }
-
-        .container-edit {
-            display: none;
-        }
-
-        h1 {
-            font-size: 32px;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-
-        img {
-            width: 280px;
-            height: auto;
-            display: block;
-            margin-bottom: 25px;
-        }
-
-        h3 {
-            display: inline;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        hr {
-            border: 0;
-            border-top: 1px solid #ccc;
-            margin: 15px 0;
-        }
-
-        input {
-            font-size: 16px;
-            padding: 4px;
-            width: 250px;
-        }
-
-        .button {
-            background-color: #fff;
-            border: 1px solid #ccc;
-            padding: 10px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 15px;
-        }
-
-        .button:hover {
-            background-color: #f7f7f7;
-        }
-    </style>
 </head>
-
 <body>
-    <div class='container'>
-        <h1 id='header'>User Profile</h1>
-        <img src='profile-picture' alt='Profile Picture'>
-        Name: <h3 id='name'>Anna Smith</h3>
-        <hr />
-        Email: <h3 id='email'>anna.smith@example.com</h3>
-        <hr />
-        Interests: <h3 id='interests'>coding</h3>
-        <hr />
-        <button class='button' onclick="editProfile()">Edit Profile</button>
-    </div>
+    <div class="card">
+        <div class="card-header">
+            <img src="profile-picture" alt="Profile" class="avatar"
+                onerror="this.style.display='none'; document.getElementById('avatar-fallback').style.display='flex'">
+            <div class="avatar-fallback" id="avatar-fallback">S</div>
+            <div class="header-info">
+                <h1 id="display-name">Shehbaz</h1>
+                <p id="display-email">shehbaz@example.com</p>
+                <span class="badge">Active</span>
+            </div>
+        </div>
 
-    <div class='container-edit'>
-        <h1 id='header'>User Profile</h1>
-        <img src='profile-picture' alt='Profile Picture'>
-        Name: <input id='input-name' type='text' />
-        <hr />
-        Email: <input id='input-email' type='email' />
-        <hr />
-        Interests: <input id='input-interests' type='text'>
-        <hr />
-        <button class='button' onclick="saveProfile()">Save Profile</button>
+        <div class="card-body" id="view-mode">
+            <div class="field">
+                <div class="field-icon"><i class="fa-regular fa-user"></i></div>
+                <div>
+                    <div class="field-label">Full name</div>
+                    <div class="field-value" id="name">Shehbaz</div>
+                </div>
+            </div>
+            <div class="field">
+                <div class="field-icon"><i class="fa-regular fa-envelope"></i></div>
+                <div>
+                    <div class="field-label">Email address</div>
+                    <div class="field-value" id="email">shehbaz@example.com</div>
+                </div>
+            </div>
+            <div class="field">
+                <div class="field-icon"><i class="fa-regular fa-heart"></i></div>
+                <div>
+                    <div class="field-label">Interests</div>
+                    <div class="field-value" id="interests">AWS, Docker</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="edit-form" id="edit-mode">
+            <div class="form-group">
+                <label class="form-label">Full name</label>
+                <input class="form-input" id="input-name" type="text" placeholder="Your name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email address</label>
+                <input class="form-input" id="input-email" type="email" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Interests</label>
+                <input class="form-input" id="input-interests" type="text" placeholder="e.g. AWS, Docker">
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveProfile()">Save changes</button>
+            </div>
+        </div>
+
+        <div class="card-footer" id="footer-view">
+            <button class="btn btn-primary" onclick="editProfile()">Edit profile</button>
+        </div>
     </div>
 </body>
 </html>

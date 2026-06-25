@@ -1,7 +1,8 @@
 version: '3'
 services:
   my-app:
-    image: ${ECR_IMAGE}
+    # Tell docker compose to build the image locally using your Dockerfile
+    build: . 
     ports:
       - 3000:3000
     environment:
