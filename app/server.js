@@ -1,7 +1,8 @@
 var express = require('express');
 var path = require('path');
 var fs = require('fs');
-// Import the AWS SDK for DynamoDB
+
+
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { DynamoDBDocumentClient, GetCommand, PutCommand } = require("@aws-sdk/lib-dynamodb");
 
@@ -10,7 +11,7 @@ var app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Initialize the DynamoDB Client (automatically uses the EC2 Instance IAM Profile credentials)
+
 const awsRegion = process.env.AWS_REGION || "ap-south-2";
 const tableName = process.env.DYNAMO_TABLE || "user-profiles";
 
@@ -22,12 +23,12 @@ app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Get Profile Route (Migrated to DynamoDB)
+
 app.get('/get-profile', async function (req, res) {
     try {
         const command = new GetCommand({
             TableName: tableName,
-            Key: { userId: "1" } // DynamoDB matches strings, matching our key schema
+            Key: { userId: "1" } 
         });
 
         const response = await docClient.send(command);
@@ -38,11 +39,11 @@ app.get('/get-profile', async function (req, res) {
     }
 });
 
-// Update Profile Route (Migrated to DynamoDB)
+
 app.post('/update-profile', async function (req, res) {
     var userObj = req.body;
     try {
-        userObj['userId'] = "1"; // Force primary key attribute
+        userObj['userId'] = "1"; 
         
         const command = new PutCommand({
             TableName: tableName,

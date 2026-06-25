@@ -1,19 +1,17 @@
-FROM node
+FROM node:20-alpine
 
-# Create the application directory
 RUN mkdir -p /home/node-app
 
-# Set the working directory context
 WORKDIR /home/node-app
 
-# Copy package files first to install dependencies
-COPY ./app/package*.json ./
 
-# Install the dependencies inside the isolated Docker container
+COPY package*.json ./
+
+
 RUN npm install
 
-# Copy the rest of your application code
-COPY ./app .
 
-# Start the application
+COPY . .
+
+
 CMD ["node", "server.js"]
